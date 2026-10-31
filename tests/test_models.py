@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 from django.test import TestCase
 
@@ -10,6 +11,11 @@ from extra_settings.models import Setting
 
 
 class ExtraSettingsModelsTestCase(TestCase):
+    def test_database_lookup_is_skipped_before_models_are_ready(self):
+        with patch("extra_settings.models.apps.models_ready", False):
+            with self.assertNumQueries(0):
+                self.assertIsNone(Setting._get_from_database("PROJECT_NAME"))
+
     def test_get_during_model_import_uses_fallback(self):
         repo_root = Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as tmpdir:
